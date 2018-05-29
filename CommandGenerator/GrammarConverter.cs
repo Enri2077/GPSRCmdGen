@@ -160,15 +160,15 @@ namespace RoboCup.AtHome.CommandGenerator
 			if (include_comments)
 				FilteredWriteLine("/*\nMain Rule\n*/");
 			
-			BNFWriteMainRule(addManualAnswers);
+			BNFWriteMainRule();
 
-			if (addManualAnswers)
-			{
-				if (include_comments)
-					FilteredWriteLine("/*\nManually Added Rules\n*/");
-
-				BNFWriteManualRule();
-			}
+//			if (addManualAnswers)
+//			{
+//				if (include_comments)
+//					FilteredWriteLine("/*\nManually Added Rules\n*/");
+//
+//				BNFWriteManualRule();
+//			}
 
 			if (include_comments)
 				FilteredWriteLine("/*\nProduction Rules\n*/");
@@ -272,38 +272,39 @@ namespace RoboCup.AtHome.CommandGenerator
 			
 			textWriter.WriteLine("!grammar {0};\n", grammar.Name.Replace(" ", "_"));
 			
-			textWriter.WriteLine("!start <commands>;\n");
+			textWriter.WriteLine("!start <main>;\n");
 		
 		}
 
-		private void BNFWriteManualRule()
-		{
-			
-			FilteredWriteLine("<__answers> : <__name_answer> | <__object_answer> | wait here | wait | follow me;\n");
+		//		private void BNFWriteManualRule()
+		//		{
+		//
+		//			FilteredWriteLine("<__answers> : <__name_answer> | <__object_answer>;\n");
+		//
+		//			FilteredWriteLine("<__name_answer>: my name is <_names> | I am <_names>;\n");
+		//			expandedWildcards.Add("_names");
+		//
+		//			FilteredWriteLine("<__object_answer>: The <_objects> would be great;\n");
+		//			expandedWildcards.Add("_objects");
+		//
+		//		}
 
-			FilteredWriteLine("<__name_answer>: my name is <_names> | I am <_names>;\n");
-			expandedWildcards.Add("_names");
-
-			FilteredWriteLine("<__object_answer>: The <_objects> would be great;\n");
-			expandedWildcards.Add("_objects");
-
-		}
-
-		private void BNFWriteMainRule(bool addManualAnswers)
+		//		private void BNFWriteMainRule(bool addManualAnswers)
+		private void BNFWriteMainRule()
 		{
 			
 			ProductionRule main = grammar.ProductionRules["$Main"];
 
-			if (addManualAnswers)
-			{
-				FilteredWrite("<commands>: <main> | <__answers>;\n");
-			
-			}
-			else
-			{
-				FilteredWrite("<commands>: <main>;\n");
-			}
-
+//			if (addManualAnswers)
+//			{
+//				FilteredWrite("<commands>: <main> | <__answers>;\n");
+//			
+//			}
+//			else
+//			{
+//				FilteredWrite("<commands>: <main>;\n");
+//			}
+//
 			FilteredWriteLine("<main>:");
 			
 			foreach (string replacement in main.Replacements)
@@ -818,52 +819,93 @@ namespace RoboCup.AtHome.CommandGenerator
 				}
 			}
 
-			if (expandedWildcards.Contains("_objects") && (aobjects.Count +  kobjects.Count + sobjects.Count > 0))
+//			if (expandedWildcards.Contains("_objects") && (aobjects.Count +  kobjects.Count + sobjects.Count > 0))
+			if (expandedWildcards.Contains("_objects") && (IsObjectWildcardInGrammar("_aobjects", aobjects) || IsObjectWildcardInGrammar("_kobjects", kobjects) || IsObjectWildcardInGrammar("_sobjects", sobjects)))
 			{
 				
 				FilteredWriteLine("<_objects>:");
 
-				BNFWriteRuleRef("_aobjects");
-				FilteredWriteLine("|");
-		
-				BNFWriteRuleRef("_kobjects");
-				FilteredWriteLine("|");
-		
-				BNFWriteRuleRef("_sobjects");			
-				FilteredWriteLine(";\n");
+				if (IsObjectWildcardInGrammar("_aobjects", aobjects))
+				{
+					BNFWriteRuleRef("_aobjects");
+					FilteredWriteLine("|");
+				}
+				
+				if (IsObjectWildcardInGrammar("_kobjects", kobjects))
+				{
+					BNFWriteRuleRef("_kobjects");
+					FilteredWriteLine("|");
+				}
+				
+				if (IsObjectWildcardInGrammar("_sobjects", sobjects))
+				{
+					BNFWriteRuleRef("_sobjects");			
+					FilteredWriteLine(";\n");
+				}
 
 			}
 			
 			if (expandedWildcards.Contains("_objects") || expandedWildcards.Contains("_categories"))
 				BNFWriteCategoriesRule();
-			
-			if (expandedWildcards.Contains("_objects") || expandedWildcards.Contains("_aobjects"))
+
+			if (IsObjectWildcardInGrammar("_aobjects", aobjects))
 			{
-				if (aobjects.Count > 0)
+				FilteredWriteLine("<_aobjects>:");
+				FilteredWriteLine(string.Join("|\n", aobjects) + ";\n");
+			}
+
+//			if (expandedWildcards.Contains("_objects") || expandedWildcards.Contains("_aobjects"))
+//			{
+//				if (aobjects.Count > 0)
+//				{
+//					FilteredWriteLine("<_aobjects>:");
+//					FilteredWriteLine(string.Join("|\n", aobjects) + ";\n");
+//				}
+//			}
+
+			if (IsObjectWildcardInGrammar("_kobjects", kobjects))
+			{
+				FilteredWriteLine("<_kobjects>:");
+				FilteredWriteLine(string.Join("|\n", kobjects) + ";\n");
+			}
+
+//			if (expandedWildcards.Contains("_objects") || expandedWildcards.Contains("_kobjects"))
+//			{
+//				if (kobjects.Count > 0)
+//				{
+//					FilteredWriteLine("<_kobjects>:");
+//					FilteredWriteLine(string.Join("|\n", kobjects) + ";\n");
+//				}
+//			}
+			
+			if (IsObjectWildcardInGrammar("_sobjects", sobjects))
+			{
+				FilteredWriteLine("<_sobjects>:");
+				FilteredWriteLine(string.Join("|\n", sobjects) + ";\n");
+			}
+
+//			if (expandedWildcards.Contains("_objects") || expandedWildcards.Contains("_sobjects"))
+//			{
+//				if (sobjects.Count > 0)
+//				{
+//					FilteredWriteLine("<_sobjects>:");
+//					FilteredWriteLine(string.Join("|\n", sobjects) + ";\n");
+//				}
+//			}
+			
+		}
+
+		private bool IsObjectWildcardInGrammar(string name, List<string> list)
+		{
+			if (expandedWildcards.Contains("_objects") || expandedWildcards.Contains(name))
+			{
+				if (list.Count > 0)
 				{
-					FilteredWriteLine("<_aobjects>:");
-					FilteredWriteLine(string.Join("|\n", aobjects) + ";\n");
+					return true;
 				}
 			}
-			
-			if (expandedWildcards.Contains("_objects") || expandedWildcards.Contains("_kobjects"))
-			{
-				if (kobjects.Count > 0)
-				{
-					FilteredWriteLine("<_kobjects>:");
-					FilteredWriteLine(string.Join("|\n", kobjects) + ";\n");
-				}
-			}
-			
-			if (expandedWildcards.Contains("_objects") || expandedWildcards.Contains("_sobjects"))
-			{
-				if (sobjects.Count > 0)
-				{
-					FilteredWriteLine("<_sobjects>:");
-					FilteredWriteLine(string.Join("|\n", sobjects) + ";\n");
-				}
-			}
-			
+
+			return false;
 		}
 
 		private void BNFWriteCategoriesRule()
